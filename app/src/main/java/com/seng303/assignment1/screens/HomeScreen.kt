@@ -18,6 +18,10 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -28,6 +32,7 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.seng303.assignment1.dialogs.ErrorDialog
 import com.seng303.assignment1.ui.theme.NotecardAppTheme
 import com.seng303.assignment1.viewmodels.NoteCardViewModel
 
@@ -68,7 +73,7 @@ fun HomeScreen(noteViewModel: NoteCardViewModel) {
                         CreateCardScreen(navigationController, noteViewModel)
                     }
                     composable("PlayFlashCards") {
-                        PlayCardScreen(navController = navigationController)
+                        PlayCardScreen(navController = navigationController, noteCardViewModel = noteViewModel)
                     }
                 }
             }

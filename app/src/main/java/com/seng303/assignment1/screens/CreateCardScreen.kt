@@ -33,6 +33,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.seng303.assignment1.data.Answer
 import androidx.compose.foundation.lazy.items
+import com.seng303.assignment1.dialogs.ErrorDialog
 import com.seng303.assignment1.viewmodels.NoteCardViewModel
 
 @Composable
@@ -55,6 +56,18 @@ fun CreateCardScreen(navController: NavController, noteCardViewModel: NoteCardVi
 
     var answerCount by rememberSaveable {
         mutableIntStateOf(2)
+    }
+
+    var showErrorPopUpQuestion by remember {
+        mutableStateOf(false)
+    }
+
+    var showErrorPopUpAnswers by remember {
+        mutableStateOf(false)
+    }
+
+    var showErrorPopUpNoneCorrect by remember {
+        mutableStateOf(false)
     }
 //        mutableStateListOf(Answer(false, ""), Answer(false, ""))
 //    }
@@ -104,14 +117,32 @@ fun CreateCardScreen(navController: NavController, noteCardViewModel: NoteCardVi
                 horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                 Button(onClick = {
-                    noteCardViewModel.createCard(question, answersStrings)
-                    navController.navigate("Home")
+                    val filteredAnswers = answersStrings.filter { it.answerContent != "" }
+                    val numCorrectAnswers = filteredAnswers.count { it.isCorrectAnswer }
+                    if (question.isEmpty()) {
+                        showErrorPopUpQuestion = true;
+                    } else if (filteredAnswers.count() < 2) {
+                        showErrorPopUpAnswers = true;
+                    } else if (numCorrectAnswers < 1) {
+                        showErrorPopUpNoneCorrect = true;
+                    } else {
+                        noteCardViewModel.createCard(question, filteredAnswers)
+                        navController.navigate("Home")
+                    }
+
                 }) {
                     Text(text = "Save and return")
                 }
             }
         }
 
+    }
+    if (showErrorPopUpQuestion) {
+        ErrorDialog(onDismiss = { showErrorPopUpQuestion = false }, message = "A flash card must have a question", height = 135)
+    } else if (showErrorPopUpAnswers) {
+        ErrorDialog(onDismiss = { showErrorPopUpAnswers = false }, message = "A flash card must have at least 2 answers.", height = 160)
+    } else if (showErrorPopUpNoneCorrect) {
+        ErrorDialog(onDismiss = { showErrorPopUpNoneCorrect=false }, message = "A flash card must have 1 correct answer.", height = 160)
     }
 }
 
@@ -137,4 +168,13 @@ fun AnswerCheckBox(answer: Answer) {
             possibleAnswer = it
         })
     }
+}
+
+@Composable
+fun SaveAndReturn(navController: NavController,
+                  noteCardViewModel: NoteCardViewModel,
+                  question: String,
+                  answers: MutableList<Answer>
+) {
+
 }

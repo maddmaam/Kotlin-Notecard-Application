@@ -34,6 +34,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 
+
+// TODO: ADD INTENT FOR THE SEARCH FUNCTION TO OPEN THE BROWSER AND SEARCH THE QUESTION
+// TODO: ADD THE EDIT SCREEN AND FUNCTIONALITY
+// TODO: ADD LOGIC FOR DELETION OF FLASH CARD
 @Composable
 fun ViewFlashCardScreen(navController: NavController) {
     Column(

@@ -32,9 +32,8 @@ class NoteCardViewModel(private val flashCardStorage: Storage<NoteCard>) : ViewM
         flashCardStorage.getAll().catch { Log.e("NOTE_VIEW_MODEL", it.toString()) }.collect{_noteCards.emit(it)}
     }
 
-    fun createCard(question: String, answers: MutableList<Answer>) = viewModelScope.launch {
-        val filteredAnswers = answers.filter { it.answerContent != "" }
-        val flashCard = NoteCard(id = Random.nextInt(0, Int.MAX_VALUE), question = question, answers = filteredAnswers)
+    fun createCard(question: String, answers: List<Answer>) = viewModelScope.launch {
+        val flashCard = NoteCard(id = Random.nextInt(0, Int.MAX_VALUE), question = question, answers = answers)
         flashCardStorage.insert(flashCard).catch { Log.e("NOTE_CARD_VIEW_MODEL", "Could not add flash card") }.collect()
         flashCardStorage.getAll().catch { Log.e("NOTE_CARD_VIEW_MODEL", it.toString()) }.collect{_noteCards.emit(it)}
         Log.e("NOTE_CARD_VIEW_MODEL", "CREATED THE CARD!!!!")

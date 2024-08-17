@@ -67,7 +67,7 @@ fun HomeScreen(noteViewModel: NoteCardViewModel) {
                         Home(navController = navigationController)
                     }
                     composable("ViewFlashCards") {
-                        ViewFlashCardScreen(navController = navigationController)
+                        ViewFlashCardScreen(navController = navigationController, noteViewModel)
                     }
                     composable("CreateFlashCard") {
                         CreateCardScreen(navigationController, noteViewModel)

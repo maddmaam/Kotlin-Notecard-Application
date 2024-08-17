@@ -38,4 +38,13 @@ class NoteCardViewModel(private val flashCardStorage: Storage<NoteCard>) : ViewM
         flashCardStorage.getAll().catch { Log.e("NOTE_CARD_VIEW_MODEL", it.toString()) }.collect{_noteCards.emit(it)}
         Log.e("NOTE_CARD_VIEW_MODEL", "CREATED THE CARD!!!!")
     }
+
+    fun deleteCardById(cardId: Int?) = viewModelScope.launch {
+        Log.d("NOTE_CARD_VIEW_MODEL", "Delete Card: $cardId")
+        if (cardId != null) {
+            flashCardStorage.delete(cardId).collect()
+            flashCardStorage.getAll().catch { Log.e("NOTE_CARD_VIEW_MODEL", it.toString()) }
+                .collect{_noteCards.emit(it)}
+        }
+    }
 }

@@ -42,10 +42,6 @@ fun CreateCardScreen(navController: NavController, noteCardViewModel: NoteCardVi
         mutableStateOf("")
     }
 
-//    var answers by rememberSaveable {
-//        mutableStateListOf(Answer(false, ""), Answer(false, ""))
-//    }
-
     var answersStrings = remember {
         mutableStateListOf(
             Answer(false, ""),

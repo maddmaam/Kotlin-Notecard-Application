@@ -36,6 +36,7 @@ import androidx.compose.foundation.lazy.items
 import com.seng303.assignment1.dialogs.ErrorDialog
 import com.seng303.assignment1.viewmodels.NoteCardViewModel
 
+// TODO: THIS NEED TO SHOW ERROR WHEN NO CARDS ARE RETRIEVED
 @Composable
 fun CreateCardScreen(navController: NavController, noteCardViewModel: NoteCardViewModel) {
     var question by rememberSaveable {

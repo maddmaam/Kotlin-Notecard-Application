@@ -14,6 +14,8 @@ import com.seng303.assignment1.ui.theme.NotecardAppTheme
 import com.seng303.assignment1.viewmodels.NoteCardViewModel
 import org.koin.androidx.viewmodel.ext.android.viewModel as koinViewModel
 
+//TODO: CUSTOM APP ICON and CUSTOM SPLASH SCREEN
+
 class MainActivity : ComponentActivity() {
     private val noteViewModel: NoteCardViewModel by koinViewModel()
 

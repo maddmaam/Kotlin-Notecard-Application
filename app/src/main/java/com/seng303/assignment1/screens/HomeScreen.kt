@@ -28,13 +28,18 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.seng303.assignment1.dialogs.ErrorDialog
 import com.seng303.assignment1.ui.theme.NotecardAppTheme
+import com.seng303.assignment1.viewmodels.EditCardViewModel
 import com.seng303.assignment1.viewmodels.NoteCardViewModel
+import com.seng303.assignment1.viewmodels.PlayGameViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -62,9 +67,26 @@ fun HomeScreen(noteViewModel: NoteCardViewModel) {
                 .background(Color.hsv(203F, 0.24F, 1F))
                 .border(1.5.dp, Color.hsv(222F, 0.54F, 0.59F), RoundedCornerShape(21.dp))
             ) {
+                val editCardViewModel: EditCardViewModel = viewModel()
+                val playGameViewModel: PlayGameViewModel = viewModel()
                 NavHost(navController = navigationController, startDestination = "Home") {
                     composable("Home"){
                         Home(navController = navigationController)
+                    }
+                    composable("EditCard/{cardId}", arguments = listOf(navArgument("cardId") {
+                        type = NavType.StringType
+                    })) {
+                        backStackEntry ->
+                        val cardID = backStackEntry.arguments?.getString("cardId")
+                        cardID?.let { cardIDParam: String -> EditCardScreen(
+                            navController = navigationController,
+                            editCardViewModel = editCardViewModel,
+                            noteCardViewModel = noteViewModel,
+                            cardID = cardIDParam
+                        ) }
+                    }
+                    composable("GameFinish") {
+                        GameFinishScreen(playGameViewModel = playGameViewModel)
                     }
                     composable("ViewFlashCards") {
                         ViewFlashCardScreen(navController = navigationController, noteViewModel)
@@ -73,7 +95,8 @@ fun HomeScreen(noteViewModel: NoteCardViewModel) {
                         CreateCardScreen(navigationController, noteViewModel)
                     }
                     composable("PlayFlashCards") {
-                        PlayCardScreen(navController = navigationController, noteCardViewModel = noteViewModel)
+                        PlayCardScreen(navController = navigationController,
+                            noteCardViewModel = noteViewModel, playGameViewModel = playGameViewModel)
                     }
                 }
             }

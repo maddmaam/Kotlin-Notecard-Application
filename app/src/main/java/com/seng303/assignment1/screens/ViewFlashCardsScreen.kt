@@ -45,9 +45,6 @@ import com.seng303.assignment1.dialogs.AlertDialog
 import com.seng303.assignment1.viewmodels.NoteCardViewModel
 
 
-// TODO: ADD INTENT FOR THE SEARCH FUNCTION TO OPEN THE BROWSER AND SEARCH THE QUESTION
-// TODO: ADD THE EDIT SCREEN AND FUNCTIONALITY
-// TODO: ADD LOGIC FOR DELETION OF FLASH CARD
 @Composable
 fun ViewFlashCardScreen(navController: NavController, noteCardViewModel: NoteCardViewModel) {
     noteCardViewModel.getAllCards()
@@ -98,7 +95,9 @@ fun CardElement(navController: NavController, flashCard: NoteCard, deleteLambda:
                 }, modifier = Modifier.padding(end =18.dp, bottom = 6.dp)) {
                     Icon(imageVector = Icons.Default.Search, contentDescription = "Search")
                 }
-                Button(onClick = { /*TODO*/ }, modifier = Modifier.padding(end =18.dp, bottom = 6.dp)) {
+                Button(onClick = {
+                    navController.navigate("EditCard/${flashCard.id}")
+                }, modifier = Modifier.padding(end =18.dp, bottom = 6.dp)) {
                     Icon(imageVector = Icons.Default.Create, contentDescription = "Edit")
                 }
                 Button(onClick = {

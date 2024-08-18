@@ -47,4 +47,12 @@ class NoteCardViewModel(private val flashCardStorage: Storage<NoteCard>) : ViewM
                 .collect{_noteCards.emit(it)}
         }
     }
+
+    fun editCardById(cardId: Int?, card: NoteCard) = viewModelScope.launch {
+        Log.d("NOTE_CARD_VIEW_MODEL", "Editing card: $cardId")
+        if (cardId != null) {
+            flashCardStorage.edit(cardId, card).collect()
+            flashCardStorage.getAll().catch { Log.e("NOTE_CARD_VIEW_MODEL", it.toString()) }.collect{_noteCards.emit(it)}
+        }
+    }
 }

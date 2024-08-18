@@ -166,12 +166,3 @@ fun AnswerCheckBox(answer: Answer) {
         })
     }
 }
-
-@Composable
-fun SaveAndReturn(navController: NavController,
-                  noteCardViewModel: NoteCardViewModel,
-                  question: String,
-                  answers: MutableList<Answer>
-) {
-
-}

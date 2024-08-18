@@ -2,6 +2,7 @@ package com.seng303.assignment1.screens
 
 import android.icu.util.TimeUnit
 import android.util.Log
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -34,12 +35,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.seng303.assignment1.data.Answer
 import com.seng303.assignment1.data.NoteCard
 import com.seng303.assignment1.dialogs.AlertDialog
 import com.seng303.assignment1.viewmodels.NoteCardViewModel
+import com.seng303.assignment1.viewmodels.PlayGameViewModel
 import kotlinx.coroutines.android.awaitFrame
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.awaitCancellation
@@ -47,10 +50,8 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.future.future
 
-// TODO: Need to find a way to swap to new versions of this screen for each question.
-
 @Composable
-fun PlayCardScreen(navController: NavController, noteCardViewModel: NoteCardViewModel) {
+fun PlayCardScreen(navController: NavController, noteCardViewModel: NoteCardViewModel, playGameViewModel: PlayGameViewModel) {
 
 
     Column(
@@ -61,18 +62,27 @@ fun PlayCardScreen(navController: NavController, noteCardViewModel: NoteCardView
         Text(text = "Play flash cards",
             style = MaterialTheme.typography.headlineLarge,
             modifier = Modifier.padding(8.dp))
-        QuestionCard(noteCardViewModel, navController)
+        QuestionCard(noteCardViewModel, navController, playGameViewModel)
     }
 }
 
 @Composable
-fun QuestionCard(noteCardViewModel: NoteCardViewModel, navController: NavController) {
+fun QuestionCard(noteCardViewModel: NoteCardViewModel, navController: NavController, playGameViewModel: PlayGameViewModel) {
     var currentActiveIndex by rememberSaveable {
         mutableIntStateOf(0)
     }
+
+    val context = LocalContext.current
+
     // List of the current questions stored in permanent storage
     noteCardViewModel.getAllCards()
     val noteCards: List<NoteCard> by noteCardViewModel.noteCards.collectAsState(emptyList())
+
+    var correctAnswersCurrentQuestion: List<Answer>
+
+    val numberOfCards by rememberSaveable {
+        mutableIntStateOf(noteCards.size)
+    }
 
     var readyToShow by remember {
         mutableStateOf(false)
@@ -84,8 +94,9 @@ fun QuestionCard(noteCardViewModel: NoteCardViewModel, navController: NavControl
             timer += 5
             delay(5)
         }
-        // TODO: ASK PRISCILLA ABOUT THIS: future {noteCardViewModel.getAllCards()}.await()
         readyToShow = true
+        playGameViewModel.initializeAnswerList(noteCards.size)
+        playGameViewModel.initializeQuestionList(noteCards.toList())
     }
 
     if (readyToShow) {
@@ -107,13 +118,18 @@ fun QuestionCard(noteCardViewModel: NoteCardViewModel, navController: NavControl
                 mutableStateOf(noteCards[currentActiveIndex].answers[1])
             }
 
-            Box(modifier = Modifier
-                .padding(8.dp)
-                .clip(RoundedCornerShape(8.dp))
-                .background(Color.LightGray)
-                .fillMaxWidth()
-                .border(1.5.dp, Color.hsv(222F, 0.54F, 0.59F), RoundedCornerShape(8.dp))) {
-                Text(text = noteCards[currentActiveIndex].question, modifier = Modifier.padding(14.dp))
+            Box(
+                modifier = Modifier
+                    .padding(8.dp)
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(Color.LightGray)
+                    .fillMaxWidth()
+                    .border(1.5.dp, Color.hsv(222F, 0.54F, 0.59F), RoundedCornerShape(8.dp))
+            ) {
+                Text(
+                    text = noteCards[currentActiveIndex].question,
+                    modifier = Modifier.padding(14.dp)
+                )
             }
             Box(modifier = Modifier.fillMaxSize()) {
                 LazyColumn(modifier = Modifier.padding(top = 8.dp, bottom = 52.dp)) {
@@ -125,16 +141,19 @@ fun QuestionCard(noteCardViewModel: NoteCardViewModel, navController: NavControl
                             horizontalArrangement = Arrangement.Start,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            RadioButton(selected = (answer == selectedOption.value), onClick = { selectedOption.value = answer })
+                            RadioButton(
+                                selected = (answer == selectedOption.value),
+                                onClick = { selectedOption.value = answer })
                             Text(text = answer.answerContent, Modifier.padding(horizontal = 12.dp))
                         }
                     }
                 }
 
-                Column(modifier = Modifier
-                    .fillMaxWidth()
-                    .align(Alignment.BottomCenter)
-                    .background(Color.hsv(203F, 0.24F, 1F)),
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .align(Alignment.BottomCenter)
+                        .background(Color.hsv(203F, 0.24F, 1F)),
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
                     Row(
@@ -142,10 +161,31 @@ fun QuestionCard(noteCardViewModel: NoteCardViewModel, navController: NavControl
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         val questionNum = currentActiveIndex + 1
-                        Text(text = "$questionNum/${noteCards.count()}" /*Question Numbers*/, Modifier.padding(end = 60.dp))
+                        Text(
+                            text = "$questionNum/${noteCards.count()}" /*Question Numbers*/,
+                            Modifier.padding(end = 60.dp)
+                        )
                         Button(onClick = {
-                            /*TODO: DO LOGIC FOR CHECKING ANSWERS IN HERE*/
-                            currentActiveIndex++
+                            correctAnswersCurrentQuestion =
+                                noteCards[currentActiveIndex].answers.filter { it.isCorrectAnswer }
+                            val answerCorrect =
+                                correctAnswersCurrentQuestion.contains(selectedOption.value)
+                            playGameViewModel.setAnswerCorrect(
+                                currentActiveIndex,
+                                answerCorrect
+                            )
+                            val toastText: String = if (answerCorrect) {
+                                "Correct Answer"
+                            } else {
+                                "Wrong Answer"
+                            }
+                            Toast.makeText(context, toastText, Toast.LENGTH_SHORT).show()
+                            if (questionNum < noteCards.count()) {
+                                currentActiveIndex++
+                            } else {
+                                navController.popBackStack()
+                                navController.navigate("GameFinish")
+                            }
                         }, Modifier.padding(start = 60.dp)) {
                             Text(text = "Submit")
                         }
@@ -155,10 +195,5 @@ fun QuestionCard(noteCardViewModel: NoteCardViewModel, navController: NavControl
             }
         }
     }
-
 }
-
-
-
-    // TODO: MAKE THIS ASYNC
 

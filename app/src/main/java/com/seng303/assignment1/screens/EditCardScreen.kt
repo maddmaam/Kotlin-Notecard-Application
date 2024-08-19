@@ -43,7 +43,6 @@ fun EditCardScreen(
     noteCardViewModel: NoteCardViewModel,
     cardID: String
 ) {
-    // TODO: WHEN YOU EDIT A CARD, EDITS STAYS EVEN AFTER POPPING BACK STACK (ONLY WHEN USING BACK ARROW)
     val currentCard by noteCardViewModel.selectedNoteCard.collectAsState(null)
     val card: NoteCard? = currentCard
 

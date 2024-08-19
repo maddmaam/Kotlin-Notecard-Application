@@ -40,17 +40,19 @@ import androidx.core.content.ContextCompat.startActivity
 import androidx.navigation.NavController
 import com.seng303.assignment1.data.NoteCard
 import com.seng303.assignment1.dialogs.AlertDialog
+import com.seng303.assignment1.viewmodels.EditCardViewModel
 import com.seng303.assignment1.viewmodels.NoteCardViewModel
 import kotlinx.coroutines.delay
 
 
 @Composable
-fun ViewFlashCardScreen(navController: NavController, noteCardViewModel: NoteCardViewModel) {
+fun ViewFlashCardScreen(navController: NavController, noteCardViewModel: NoteCardViewModel, editCardViewModel: EditCardViewModel) {
     noteCardViewModel.getAllCards()
     val flashCards: List<NoteCard> by noteCardViewModel.noteCards.collectAsState(emptyList())
     var readyToShow by rememberSaveable {
         mutableStateOf(false)
     }
+    editCardViewModel.resetPrevCard()
     
     LaunchedEffect(key1 = flashCards) {
         var timer: Int = 0

@@ -43,14 +43,18 @@ fun EditCardScreen(
     noteCardViewModel: NoteCardViewModel,
     cardID: String
 ) {
+    // TODO: WHEN YOU EDIT A CARD, EDITS STAYS EVEN AFTER POPPING BACK STACK (ONLY WHEN USING BACK ARROW)
     val currentCard by noteCardViewModel.selectedNoteCard.collectAsState(null)
     val card: NoteCard? = currentCard
 
     LaunchedEffect(card) {
         if (card == null) {
             noteCardViewModel.getCardById(cardID.toIntOrNull())
-        } else {
-            editCardViewModel.loadCardVales(card)
+        }
+        if (card != null) {
+            if (editCardViewModel.previousCard.id != card.id) {
+                editCardViewModel.loadCardValues(card)
+            }
         }
     }
 
@@ -109,6 +113,7 @@ fun EditCardScreen(
             ) {
                 Button(onClick = {
                     noteCardViewModel.editCardById(cardID.toIntOrNull(), card = NoteCard(cardID.toInt(), editCardViewModel.question, editCardViewModel.answersStrings))
+                    editCardViewModel.resetPrevCard()
                     navController.popBackStack()
                 }) {
                     Text(text = "Save and return")

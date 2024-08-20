@@ -51,7 +51,7 @@ fun GameFinishScreen(
         Text(text = "Score: ${numCorrectAnswers}/${correctAnswers.count()}",
             fontSize = 36.sp,
             style = MaterialTheme.typography.headlineLarge,
-            modifier = Modifier.padding(8.dp))
+            modifier = Modifier.padding(8.dp), color = MaterialTheme.colorScheme.onTertiary)
         LazyColumn {
             itemsIndexed(correctAnswers) { index, answer ->
                 ScoreBox(question = questions[index], correct = answer)
@@ -66,14 +66,14 @@ fun ScoreBox(question: String, correct: Boolean) {
     FlowRow(
         Modifier.padding(16.dp)
             .clip(RoundedCornerShape(16.dp))
-            .background(Color.hsv(203F, 0.12F, 1F))
+            .background(MaterialTheme.colorScheme.surfaceContainerLow)
             .fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalArrangement = Arrangement.Center,
         maxItemsInEachRow = 2
     ) {
         val imagePadding = Modifier.align(Alignment.CenterVertically).padding(top = 2.dp, bottom = 2.dp, end = 8.dp).weight(1f)
-        Text(text = question, Modifier.fillMaxWidth(0.8f).padding(top = 8.dp, bottom = 8.dp, start = 8.dp))
+        Text(text = question, Modifier.fillMaxWidth(0.8f).padding(top = 8.dp, bottom = 8.dp, start = 8.dp), color = MaterialTheme.colorScheme.onSecondaryContainer)
         if (correct) {
             Image(imageVector = Icons.Default.Check, contentDescription = "Correct Answers", modifier = imagePadding, contentScale = FixedScale(1.5f))
         } else {

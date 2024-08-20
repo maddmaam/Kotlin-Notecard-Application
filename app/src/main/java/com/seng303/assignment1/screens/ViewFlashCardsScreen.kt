@@ -2,7 +2,10 @@ package com.seng303.assignment1.screens
 
 import android.app.SearchManager
 import android.content.Intent
+import android.content.res.Configuration
 import androidx.compose.foundation.background
+import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -25,13 +28,17 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -46,13 +53,13 @@ import kotlinx.coroutines.delay
 
 
 @Composable
-fun ViewFlashCardScreen(navController: NavController, noteCardViewModel: NoteCardViewModel, editCardViewModel: EditCardViewModel) {
+fun ViewFlashCardScreen(navController: NavController, noteCardViewModel: NoteCardViewModel, resetCardEditFn: () -> Unit) {
     noteCardViewModel.getAllCards()
     val flashCards: List<NoteCard> by noteCardViewModel.noteCards.collectAsState(emptyList())
     var readyToShow by rememberSaveable {
         mutableStateOf(false)
     }
-    editCardViewModel.resetPrevCard()
+    resetCardEditFn()
     
     LaunchedEffect(key1 = flashCards) {
         var timer: Int = 0
@@ -66,22 +73,22 @@ fun ViewFlashCardScreen(navController: NavController, noteCardViewModel: NoteCar
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp)
+            .padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Top
     ) {
         if (flashCards.isNotEmpty() && readyToShow) {
-            Box(modifier = Modifier.fillMaxWidth(),
-                contentAlignment = Alignment.TopCenter) {
-                Text(text = "Flash Cards",
-                    style = MaterialTheme.typography.titleLarge,
-                    textAlign = TextAlign.Center,
-                    fontWeight = FontWeight.Bold)
+            Text(text = "Flash Cards",
+                style = MaterialTheme.typography.titleLarge,
+                textAlign = TextAlign.Center,
+                fontWeight = FontWeight.Bold,
+                color = if (isSystemInDarkTheme()) MaterialTheme.colorScheme.inverseOnSurface else MaterialTheme.colorScheme.onSurface)
 
-                LazyColumn (Modifier.padding(top = 40.dp, bottom = 8.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally) {
-                    items(flashCards) { flashCard ->
-                        CardElement(navController = navController, flashCard = flashCard,
-                            deleteLambda = {id: Int ->  noteCardViewModel.deleteCardById(id)}, numCards = flashCards.size)
-                    }
+            LazyColumn (Modifier.padding(top = 16.dp, bottom = 8.dp),
+                horizontalAlignment = Alignment.CenterHorizontally) {
+                items(flashCards) { flashCard ->
+                    CardElement(navController = navController, flashCard = flashCard,
+                        deleteLambda = {id: Int ->  noteCardViewModel.deleteCardById(id)}, numCards = flashCards.size)
                 }
             }
         } else if (readyToShow) {
@@ -93,7 +100,7 @@ fun ViewFlashCardScreen(navController: NavController, noteCardViewModel: NoteCar
                 alertText = "There were no cards found. Please create some cards.",
                 dismissText = "Return Home",
                 confirmText = "Create Card",
-                icon = Icons.Default.Info
+                icon = Icons.Default.Info,
             )
         }
     }
@@ -108,11 +115,21 @@ fun CardElement(navController: NavController, flashCard: NoteCard, deleteLambda:
         mutableStateOf(false)
     }
 
+    var screenOrientation by remember {
+        mutableIntStateOf(Configuration.ORIENTATION_PORTRAIT)
+    }
+
+    val currentConfig = LocalConfiguration.current
+
+    LaunchedEffect(currentConfig) {
+        snapshotFlow { currentConfig.orientation }.collect {screenOrientation = it}
+    }
+
     Box(modifier = Modifier
         .fillMaxWidth()
         .padding(top = 22.dp)
         .clip(RoundedCornerShape(21.dp))
-        .background(Color.White)) {
+        .background(MaterialTheme.colorScheme.background)) {
         Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
             Text(text = flashCard.question, modifier = Modifier.padding(start = 16.dp, top = 8.dp, end = 4.dp, bottom = 2.dp), textAlign = TextAlign.Center)
             Row {
@@ -152,7 +169,8 @@ fun CardElement(navController: NavController, flashCard: NoteCard, deleteLambda:
             alertText = "Are you sure you would like to delete flash card: \"${flashCard.question}\" ?",
             dismissText = "Cancel",
             confirmText = "Delete",
-            icon = Icons.Default.Delete
+            icon = Icons.Default.Delete,
+            confirmColor = Color.Red
         )
     }
 }

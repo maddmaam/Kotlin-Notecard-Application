@@ -1,10 +1,12 @@
 package com.seng303.assignment1.screens
 
+import android.annotation.SuppressLint
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -14,6 +16,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -33,10 +36,12 @@ import androidx.navigation.NavController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.seng303.assignment1.dialogs.ErrorDialog
 import com.seng303.assignment1.ui.theme.NotecardAppTheme
+import com.seng303.assignment1.viewmodels.CreateCardViewModel
 import com.seng303.assignment1.viewmodels.EditCardViewModel
 import com.seng303.assignment1.viewmodels.NoteCardViewModel
 import com.seng303.assignment1.viewmodels.PlayGameViewModel
@@ -46,7 +51,7 @@ import com.seng303.assignment1.viewmodels.PlayGameViewModel
 fun HomeScreen(noteViewModel: NoteCardViewModel) {
     NotecardAppTheme {
         val navigationController = rememberNavController()
-        Scaffold(Modifier.padding(12.dp),
+        Scaffold(Modifier.background(MaterialTheme.colorScheme.background).padding(12.dp),
             topBar = {
                 TopAppBar(
                     title = { Text(text = "Flash Cards App")},
@@ -64,11 +69,16 @@ fun HomeScreen(noteViewModel: NoteCardViewModel) {
             Box(modifier = Modifier
                 .padding(it)
                 .clip(RoundedCornerShape(21.dp))
-                .background(Color.hsv(203F, 0.24F, 1F))
+                .background(MaterialTheme.colorScheme.secondaryContainer)
                 .border(1.5.dp, Color.hsv(222F, 0.54F, 0.59F), RoundedCornerShape(21.dp))
             ) {
                 val editCardViewModel: EditCardViewModel = viewModel()
                 val playGameViewModel: PlayGameViewModel = viewModel()
+                val createCardViewModel: CreateCardViewModel = viewModel()
+                if (navigationController.currentBackStackEntryAsState().value?.destination?.route == "Home") {
+                    createCardViewModel.resetInputFields()
+                    playGameViewModel.resetPlaying()
+                }
                 NavHost(navController = navigationController, startDestination = "Home") {
                     composable("Home"){
                         Home(navController = navigationController)
@@ -89,10 +99,10 @@ fun HomeScreen(noteViewModel: NoteCardViewModel) {
                         GameFinishScreen(playGameViewModel = playGameViewModel)
                     }
                     composable("ViewFlashCards") {
-                        ViewFlashCardScreen(navController = navigationController, noteViewModel, editCardViewModel)
+                        ViewFlashCardScreen(navController = navigationController, noteViewModel) { editCardViewModel.resetPrevCard() }
                     }
                     composable("CreateFlashCard") {
-                        CreateCardScreen(navigationController, noteViewModel)
+                        CreateCardScreen(navigationController, noteViewModel, createCardViewModel)
                     }
                     composable("PlayFlashCards") {
                         PlayCardScreen(navController = navigationController,

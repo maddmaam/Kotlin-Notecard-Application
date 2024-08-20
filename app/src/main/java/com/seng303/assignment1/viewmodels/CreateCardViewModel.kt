@@ -26,4 +26,22 @@ class CreateCardViewModel : ViewModel() {
         answersStrings.add(Answer(isCorrect, answerContent))
     }
 
+    fun getFilteredAnswers(): List<Answer> {
+        return answersStrings.filter { it.answerContent != "" }
+    }
+
+    fun getNumCorrectAnswers(): Int {
+        return answersStrings.count { it.isCorrectAnswer }
+    }
+
+    fun resetInputFields() {
+        answersStrings = mutableStateListOf(
+            Answer(false, ""),
+            Answer(false, ""),
+            Answer(false, ""),
+            Answer(false, "")
+        )
+        question = ""
+    }
+
 }

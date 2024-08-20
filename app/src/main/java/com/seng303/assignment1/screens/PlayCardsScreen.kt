@@ -1,10 +1,10 @@
 package com.seng303.assignment1.screens
 
-import android.icu.util.TimeUnit
-import android.util.Log
+import android.content.res.Configuration
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -19,7 +19,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -31,10 +30,12 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
@@ -43,35 +44,38 @@ import com.seng303.assignment1.data.NoteCard
 import com.seng303.assignment1.dialogs.AlertDialog
 import com.seng303.assignment1.viewmodels.NoteCardViewModel
 import com.seng303.assignment1.viewmodels.PlayGameViewModel
-import kotlinx.coroutines.android.awaitFrame
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.future.await
-import kotlinx.coroutines.future.future
 
 @Composable
 fun PlayCardScreen(navController: NavController, noteCardViewModel: NoteCardViewModel, playGameViewModel: PlayGameViewModel) {
+    var screenOrientation by remember {
+        mutableIntStateOf(Configuration.ORIENTATION_PORTRAIT)
+    }
 
+    val currentConfig = LocalConfiguration.current
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp)
-    ) {
-        Text(text = "Play flash cards",
-            style = MaterialTheme.typography.headlineLarge,
-            modifier = Modifier.padding(8.dp))
-        QuestionCard(noteCardViewModel, navController, playGameViewModel)
+    LaunchedEffect(currentConfig) {
+        snapshotFlow { currentConfig.orientation }.collect {screenOrientation = it}
+    }
+
+    when (screenOrientation) {
+       Configuration.ORIENTATION_LANDSCAPE -> {
+           LandscapePlayCardScreen(
+               navController = navController,
+               noteCardViewModel = noteCardViewModel,
+               playGameViewModel = playGameViewModel)
+       } else -> {
+            PortraitPlayCardScreen (
+                navController = navController,
+                noteCardViewModel = noteCardViewModel,
+                playGameViewModel = playGameViewModel
+            )
+       }
     }
 }
 
 @Composable
 fun QuestionCard(noteCardViewModel: NoteCardViewModel, navController: NavController, playGameViewModel: PlayGameViewModel) {
-    var currentActiveIndex by rememberSaveable {
-        mutableIntStateOf(0)
-    }
-
     val context = LocalContext.current
 
     // List of the current questions stored in permanent storage
@@ -79,10 +83,6 @@ fun QuestionCard(noteCardViewModel: NoteCardViewModel, navController: NavControl
     val noteCards: List<NoteCard> by noteCardViewModel.noteCards.collectAsState(emptyList())
 
     var correctAnswersCurrentQuestion: List<Answer>
-
-    val numberOfCards by rememberSaveable {
-        mutableIntStateOf(noteCards.size)
-    }
 
     var readyToShow by remember {
         mutableStateOf(false)
@@ -94,9 +94,12 @@ fun QuestionCard(noteCardViewModel: NoteCardViewModel, navController: NavControl
             timer += 5
             delay(5)
         }
+        if (!playGameViewModel.getCurrentPlayStatus()) {
+            playGameViewModel.initializeAnswerList(noteCards.size)
+            playGameViewModel.initializeQuestionList(noteCards.toList())
+            playGameViewModel.startPlaying()
+        }
         readyToShow = true
-        playGameViewModel.initializeAnswerList(noteCards.size)
-        playGameViewModel.initializeQuestionList(noteCards.toList())
     }
 
     if (readyToShow) {
@@ -115,7 +118,7 @@ fun QuestionCard(noteCardViewModel: NoteCardViewModel, navController: NavControl
             )
         } else {
             val selectedOption = remember {
-                mutableStateOf(noteCards[currentActiveIndex].answers[1])
+                mutableStateOf(noteCards[playGameViewModel.currentActiveIndex].answers[1])
             }
 
             Box(
@@ -127,13 +130,14 @@ fun QuestionCard(noteCardViewModel: NoteCardViewModel, navController: NavControl
                     .border(1.5.dp, Color.hsv(222F, 0.54F, 0.59F), RoundedCornerShape(8.dp))
             ) {
                 Text(
-                    text = noteCards[currentActiveIndex].question,
-                    modifier = Modifier.padding(14.dp)
+                    text = noteCards[playGameViewModel.currentActiveIndex].question,
+                    modifier = Modifier.padding(14.dp),
+                    color = MaterialTheme.colorScheme.onSecondaryContainer
                 )
             }
             Box(modifier = Modifier.fillMaxSize()) {
                 LazyColumn(modifier = Modifier.padding(top = 8.dp, bottom = 52.dp)) {
-                    items(noteCards[currentActiveIndex].answers) { answer ->
+                    items(noteCards[playGameViewModel.currentActiveIndex].answers) { answer ->
                         Row(
                             Modifier
                                 .fillMaxWidth()
@@ -144,7 +148,8 @@ fun QuestionCard(noteCardViewModel: NoteCardViewModel, navController: NavControl
                             RadioButton(
                                 selected = (answer == selectedOption.value),
                                 onClick = { selectedOption.value = answer })
-                            Text(text = answer.answerContent, Modifier.padding(horizontal = 12.dp))
+                            Text(text = answer.answerContent, Modifier.padding(horizontal = 12.dp),
+                                color = MaterialTheme.colorScheme.onSecondaryContainer)
                         }
                     }
                 }
@@ -153,25 +158,25 @@ fun QuestionCard(noteCardViewModel: NoteCardViewModel, navController: NavControl
                     modifier = Modifier
                         .fillMaxWidth()
                         .align(Alignment.BottomCenter)
-                        .background(Color.hsv(203F, 0.24F, 1F)),
+                        .background(MaterialTheme.colorScheme.secondaryContainer),
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
                     Row(
                         horizontalArrangement = Arrangement.Start,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        val questionNum = currentActiveIndex + 1
+                        val questionNum = playGameViewModel.currentActiveIndex + 1
                         Text(
                             text = "$questionNum/${noteCards.count()}" /*Question Numbers*/,
-                            Modifier.padding(end = 60.dp)
+                            Modifier.padding(end = 60.dp), color = MaterialTheme.colorScheme.onSecondaryContainer
                         )
                         Button(onClick = {
                             correctAnswersCurrentQuestion =
-                                noteCards[currentActiveIndex].answers.filter { it.isCorrectAnswer }
+                                noteCards[playGameViewModel.currentActiveIndex].answers.filter { it.isCorrectAnswer }
                             val answerCorrect =
                                 correctAnswersCurrentQuestion.contains(selectedOption.value)
                             playGameViewModel.setAnswerCorrect(
-                                currentActiveIndex,
+                                playGameViewModel.currentActiveIndex,
                                 answerCorrect
                             )
                             val toastText: String = if (answerCorrect) {
@@ -181,7 +186,7 @@ fun QuestionCard(noteCardViewModel: NoteCardViewModel, navController: NavControl
                             }
                             Toast.makeText(context, toastText, Toast.LENGTH_SHORT).show()
                             if (questionNum < noteCards.count()) {
-                                currentActiveIndex++
+                                playGameViewModel.currentActiveIndex++
                             } else {
                                 navController.popBackStack()
                                 navController.navigate("GameFinish")
@@ -194,6 +199,32 @@ fun QuestionCard(noteCardViewModel: NoteCardViewModel, navController: NavControl
                 }
             }
         }
+    }
+}
+
+@Composable
+fun PortraitPlayCardScreen(navController: NavController, noteCardViewModel: NoteCardViewModel, playGameViewModel: PlayGameViewModel) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp)
+    ) {
+        Text(text = "Play flash cards",
+            style = MaterialTheme.typography.headlineLarge,
+            modifier = Modifier.padding(8.dp),
+            color = MaterialTheme.colorScheme.onSecondaryContainer)
+        QuestionCard(noteCardViewModel, navController, playGameViewModel)
+    }
+}
+
+@Composable
+fun LandscapePlayCardScreen(navController: NavController, noteCardViewModel: NoteCardViewModel, playGameViewModel: PlayGameViewModel) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp)
+    ) {
+        QuestionCard(noteCardViewModel = noteCardViewModel, navController = navController, playGameViewModel = playGameViewModel)
     }
 }
 

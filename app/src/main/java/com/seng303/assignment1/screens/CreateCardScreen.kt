@@ -2,6 +2,7 @@ package com.seng303.assignment1.screens
 
 import android.content.res.Configuration
 import androidx.compose.foundation.background
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -37,212 +38,43 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.seng303.assignment1.data.Answer
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.CheckboxColors
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.platform.LocalConfiguration
 import com.seng303.assignment1.dialogs.ErrorDialog
+import com.seng303.assignment1.viewmodels.CreateCardViewModel
 import com.seng303.assignment1.viewmodels.NoteCardViewModel
 
 // TODO: THIS NEED TO SHOW ERROR WHEN NO CARDS ARE RETRIEVED
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun CreateCardScreen(navController: NavController, noteCardViewModel: NoteCardViewModel) {
-    var question by rememberSaveable {
-        mutableStateOf("")
-    }
-
+fun CreateCardScreen(navController: NavController, noteCardViewModel: NoteCardViewModel, createCardViewModel: CreateCardViewModel)  {
     var screenOrientation by remember {
         mutableIntStateOf(Configuration.ORIENTATION_PORTRAIT)
     }
 
     val currentConfig = LocalConfiguration.current
 
-    var answersStrings = remember { // TODO: REFACTOR INTO VIEW MODEL
-        mutableStateListOf(
-            Answer(false, ""),
-            Answer(false, ""),
-            Answer(false, ""),
-            Answer(false, ""))
-    }
-
-    var answerCount by rememberSaveable {
-        mutableIntStateOf(2)
-    }
-
-    var showErrorPopUpQuestion by remember {
-        mutableStateOf(false)
-    }
-
-    var showErrorPopUpAnswers by remember {
-        mutableStateOf(false)
-    }
-
-    var showErrorPopUpNoneCorrect by remember {
-        mutableStateOf(false)
-    }
-
     LaunchedEffect(currentConfig) {
         snapshotFlow { currentConfig.orientation }.collect {screenOrientation = it}
     }
 
-    val textBoxHeight: Int
-    val topTextPadding: Int
-    val columnPadding: Int
-
     when (screenOrientation) {
         Configuration.ORIENTATION_LANDSCAPE -> {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(16.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Box(modifier = Modifier.padding(8.dp)) {
-                    FlowRow(horizontalArrangement = Arrangement.spacedBy(30.dp), modifier = Modifier.padding(start = 40.dp)) {
-                        Column {
-                            Text(text = "Add a new flash card", // Title
-                                style = MaterialTheme.typography.headlineLarge,
-                                modifier = Modifier.padding(8.dp)
-                            )
-                            OutlinedTextField( // Input Question Field
-                                value = question,
-                                onValueChange = {question = it},
-                                label = { Text(text = "Input question here")},
-                                modifier = Modifier
-                                    .weight(1F)
-                                    .padding(bottom = 52.dp),
-                                shape = RoundedCornerShape(10.dp),
-                                colors = OutlinedTextFieldDefaults.colors(
-                                    focusedContainerColor = Color.LightGray,
-                                    unfocusedContainerColor = Color.LightGray,
-                                    focusedBorderColor = Color.hsv(222F, 0.54F, 0.59F),
-                                    unfocusedBorderColor = Color.hsv(222F, 0.54F, 0.59F)
-                                )
-                            )
-                        }
-                        LazyColumn(modifier = Modifier.padding(top = 2.dp, bottom = 52.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally) {
-                            items(answersStrings) { flashCard ->
-                                AnswerCheckBox(flashCard)
-                            }
-                            item {
-                                Button(
-                                    onClick = { answersStrings.add(Answer(false, "")) },
-                                    modifier = Modifier.size(width = 75.dp, height = 42.dp)
-                                ) {
-                                    Text(
-                                        text = "+",
-                                        style = MaterialTheme.typography.titleLarge
-                                    )
-                                }
-                            }
-                        }
-                    }
-
-                    Column(modifier = Modifier
-                        .fillMaxWidth()
-                        .align(Alignment.BottomCenter)
-                        .background(Color.hsv(203F, 0.24F, 1F)),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Button(onClick = {
-                            val filteredAnswers = answersStrings.filter { it.answerContent != "" }
-                            val numCorrectAnswers = filteredAnswers.count { it.isCorrectAnswer }
-                            if (question.isEmpty()) {
-                                showErrorPopUpQuestion = true;
-                            } else if (filteredAnswers.count() < 2) {
-                                showErrorPopUpAnswers = true;
-                            } else if (numCorrectAnswers < 1) {
-                                showErrorPopUpNoneCorrect = true;
-                            } else {
-                                noteCardViewModel.createCard(question, filteredAnswers)
-                                navController.navigate("Home")
-                            }
-
-                        }) {
-                            Text(text = "Save and return")
-                        }
-                    }
-                }
-            }
+            LandScapeCreateCardScreen(
+                navController = navController,
+                noteCardViewModel = noteCardViewModel,
+                createCardViewModel = createCardViewModel
+            )
         } else -> {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(16.dp)
-        ) {
-            Text(text = "Add a new flash card", // Title
-                style = MaterialTheme.typography.headlineLarge,
-                modifier = Modifier.padding(8.dp)
+            PortraitCreateCardScreen(
+                navController = navController,
+                noteCardViewModel = noteCardViewModel,
+                createCardViewModel = createCardViewModel
             )
-            OutlinedTextField( // Input Question Field
-                value = question,
-                onValueChange = {question = it},
-                label = { Text(text = "Input question here")},
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(100.dp)
-                    .padding(bottom = 8.dp),
-                shape = RoundedCornerShape(10.dp),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedContainerColor = Color.LightGray,
-                    unfocusedContainerColor = Color.LightGray,
-                    focusedBorderColor = Color.hsv(222F, 0.54F, 0.59F),
-                    unfocusedBorderColor = Color.hsv(222F, 0.54F, 0.59F)
-                )
-            )
-            Box (Modifier.fillMaxSize()){
-                LazyColumn(modifier = Modifier.padding(top = 8.dp, bottom = 52.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally) {
-                    items(answersStrings) {
-                            flashCard -> AnswerCheckBox(flashCard)
-                    }
-                    item { Button(
-                        onClick = {answersStrings.add(Answer(false, ""))},
-                        modifier = Modifier.size(width = 75.dp, height = 42.dp)
-                    ) {
-                        Text(text = "+",
-                            style = MaterialTheme.typography.titleLarge)
-                    } }
-                }
-                Column(modifier = Modifier
-                    .fillMaxWidth()
-                    .align(Alignment.BottomCenter)
-                    .background(Color.hsv(203F, 0.24F, 1F)),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Button(onClick = {
-                        val filteredAnswers = answersStrings.filter { it.answerContent != "" }
-                        val numCorrectAnswers = filteredAnswers.count { it.isCorrectAnswer }
-                        if (question.isEmpty()) {
-                            showErrorPopUpQuestion = true;
-                        } else if (filteredAnswers.count() < 2) {
-                            showErrorPopUpAnswers = true;
-                        } else if (numCorrectAnswers < 1) {
-                            showErrorPopUpNoneCorrect = true;
-                        } else {
-                            noteCardViewModel.createCard(question, filteredAnswers)
-                            navController.navigate("Home")
-                        }
-
-                    }) {
-                        Text(text = "Save and return")
-                    }
-                }
-            }
-
-        }
-        if (showErrorPopUpQuestion) {
-            ErrorDialog(onDismiss = { showErrorPopUpQuestion = false }, message = "A flash card must have a question", height = 135)
-        } else if (showErrorPopUpAnswers) {
-            ErrorDialog(onDismiss = { showErrorPopUpAnswers = false }, message = "A flash card must have at least 2 answers.", height = 160)
-        } else if (showErrorPopUpNoneCorrect) {
-            ErrorDialog(onDismiss = { showErrorPopUpNoneCorrect=false }, message = "A flash card must have 1 correct answer.", height = 160)
-        }
         }
     }
-
-
 }
 
 @Composable
@@ -258,7 +90,7 @@ fun AnswerCheckBox(answer: Answer) {
     }
 
     Row(Modifier.padding(12.dp)) {
-        Checkbox(checked = checked , onCheckedChange = {
+        Checkbox(checked = checked, onCheckedChange = {
             answer.isCorrectAnswer = it
             checked = it
         })
@@ -271,19 +103,7 @@ fun AnswerCheckBox(answer: Answer) {
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun LandScapeCreateCardScreen(navController: NavController, noteCardViewModel: NoteCardViewModel) {
-    var question by rememberSaveable {
-        mutableStateOf("")
-    }
-
-    val answersStrings = remember {
-        mutableStateListOf(
-            Answer(false, ""),
-            Answer(false, ""),
-            Answer(false, ""),
-            Answer(false, ""))
-    }
-
+fun LandScapeCreateCardScreen(navController: NavController, noteCardViewModel: NoteCardViewModel, createCardViewModel: CreateCardViewModel) {
     var showErrorPopUpQuestion by remember {
         mutableStateOf(false)
     }
@@ -296,8 +116,200 @@ fun LandScapeCreateCardScreen(navController: NavController, noteCardViewModel: N
         mutableStateOf(false)
     }
 
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Box(modifier = Modifier.padding(8.dp)) {
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(30.dp), modifier = Modifier.padding(start = 40.dp)) {
+                Column {
+                    Text(text = "Add a new flash card", // Title
+                        style = MaterialTheme.typography.headlineLarge,
+                        modifier = Modifier.padding(8.dp),
+                        color = when (isSystemInDarkTheme()) {
+                            true -> {
+                                MaterialTheme.colorScheme.inverseOnSurface
+                            } else -> {
+                                MaterialTheme.colorScheme.onSurface
+                            }
+                        }
+                    )
+                    OutlinedTextField( // Input Question Field
+                        value = createCardViewModel.question,
+                        onValueChange = {createCardViewModel.changeQuestion(it)},
+                        label = { Text(text = "Input question here", color = when (isSystemInDarkTheme()) {
+                            true -> {
+                            MaterialTheme.colorScheme.inverseOnSurface
+                        } else -> {
+                            MaterialTheme.colorScheme.onSurface
+                        }
+                        })},
+                        modifier = Modifier
+                            .weight(1F)
+                            .padding(bottom = 52.dp),
+                        shape = RoundedCornerShape(10.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedContainerColor = MaterialTheme.colorScheme.tertiary,
+                            unfocusedContainerColor = MaterialTheme.colorScheme.onSecondary,
+                            focusedBorderColor = Color.hsv(222F, 0.54F, 0.59F),
+                            unfocusedBorderColor = Color.hsv(222F, 0.54F, 0.59F),
+                            focusedTextColor = Color.Black,
+                            unfocusedTextColor = Color.Black
+                        )
+                    )
+                }
+                LazyColumn(modifier = Modifier.padding(top = 2.dp, bottom = 52.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally) {
+                    items(createCardViewModel.answersStrings) { flashCard ->
+                        AnswerCheckBox(flashCard)
+                    }
+                    item {
+                        Button(
+                            onClick = { createCardViewModel.addAnswer(false, "") },
+                            modifier = Modifier.size(width = 75.dp, height = 42.dp)
+                        ) {
+                            Text(
+                                text = "+",
+                                style = MaterialTheme.typography.titleLarge
+                            )
+                        }
+                    }
+                }
+            }
+
+            Column(modifier = Modifier
+                .fillMaxWidth()
+                .align(Alignment.BottomCenter)
+                .background(MaterialTheme.colorScheme.secondaryContainer),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Button(onClick = {
+                    val filteredAnswers = createCardViewModel.getFilteredAnswers()
+                    val numCorrectAnswers = createCardViewModel.getNumCorrectAnswers()
+                    if (createCardViewModel.question.isEmpty()) {
+                        showErrorPopUpQuestion = true;
+                    } else if (filteredAnswers.count() < 2) {
+                        showErrorPopUpAnswers = true;
+                    } else if (numCorrectAnswers < 1) {
+                        showErrorPopUpNoneCorrect = true;
+                    } else {
+                        noteCardViewModel.createCard(createCardViewModel.question, filteredAnswers)
+                        navController.navigate("Home")
+                    }
+
+                }) {
+                    Text(text = "Save and return")
+                }
+            }
+        }
+    }
+    if (showErrorPopUpQuestion) {
+        ErrorDialog(onDismiss = { showErrorPopUpQuestion = false }, message = "A flash card must have a question", height = 135)
+    } else if (showErrorPopUpAnswers) {
+        ErrorDialog(onDismiss = { showErrorPopUpAnswers = false }, message = "A flash card must have at least 2 answers.", height = 160)
+    } else if (showErrorPopUpNoneCorrect) {
+        ErrorDialog(onDismiss = { showErrorPopUpNoneCorrect=false }, message = "A flash card must have 1 correct answer.", height = 160)
+    }
+}
 
 
+@Composable
+fun PortraitCreateCardScreen(navController: NavController, noteCardViewModel: NoteCardViewModel, createCardViewModel: CreateCardViewModel) {
+    var showErrorPopUpQuestion by remember {
+        mutableStateOf(false)
+    }
+
+    var showErrorPopUpAnswers by remember {
+        mutableStateOf(false)
+    }
+
+    var showErrorPopUpNoneCorrect by remember {
+        mutableStateOf(false)
+    }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp)
+    ) {
+        Text(text = "Add a new flash card", // Title
+            style = MaterialTheme.typography.headlineLarge,
+            modifier = Modifier.padding(8.dp),
+            color = when (isSystemInDarkTheme()) {
+                true -> {
+                    MaterialTheme.colorScheme.inverseOnSurface
+                } else -> {
+                    MaterialTheme.colorScheme.onSurface
+                }
+            }
+        )
+        OutlinedTextField( // Input Question Field
+            value = createCardViewModel.question,
+            onValueChange = { createCardViewModel.changeQuestion(it) },
+            label = { Text(text = "Input question here", color = when (isSystemInDarkTheme()) {
+                true -> {
+                    MaterialTheme.colorScheme.inverseOnSurface
+                } else -> {
+                    MaterialTheme.colorScheme.onSurface
+                }
+            })},
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(100.dp)
+                .padding(bottom = 8.dp),
+            shape = RoundedCornerShape(10.dp),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedContainerColor = MaterialTheme.colorScheme.tertiary,
+                unfocusedContainerColor = MaterialTheme.colorScheme.onSecondary,
+                focusedBorderColor = Color.hsv(222F, 0.54F, 0.59F),
+                unfocusedBorderColor = Color.hsv(222F, 0.54F, 0.59F),
+                focusedTextColor = Color.Black,
+                unfocusedTextColor = Color.Black
+            )
+        )
+        Box (Modifier.fillMaxSize()){
+            LazyColumn(modifier = Modifier.padding(top = 8.dp, bottom = 52.dp),
+                horizontalAlignment = Alignment.CenterHorizontally) {
+                items(createCardViewModel.answersStrings) {
+                        flashCard -> AnswerCheckBox(flashCard)
+                }
+                item { Button(
+                    onClick = {createCardViewModel.addAnswer(false, "")},
+                    modifier = Modifier.size(width = 75.dp, height = 42.dp)
+                ) {
+                    Text(text = "+",
+                        style = MaterialTheme.typography.titleLarge)
+                } }
+            }
+            Column(modifier = Modifier
+                .fillMaxWidth()
+                .align(Alignment.BottomCenter)
+                .background(MaterialTheme.colorScheme.secondaryContainer),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Button(onClick = {
+                    val filteredAnswers = createCardViewModel.getFilteredAnswers()
+                    val numCorrectAnswers = createCardViewModel.getNumCorrectAnswers()
+                    if (createCardViewModel.question.isEmpty()) {
+                        showErrorPopUpQuestion = true
+                    } else if (filteredAnswers.count() < 2) {
+                        showErrorPopUpAnswers = true
+                    } else if (numCorrectAnswers < 1) {
+                        showErrorPopUpNoneCorrect = true
+                    } else {
+                        noteCardViewModel.createCard(createCardViewModel.question, filteredAnswers)
+                        navController.navigate("Home")
+                    }
+
+                }) {
+                    Text(text = "Save and return")
+                }
+            }
+        }
+
+    }
     if (showErrorPopUpQuestion) {
         ErrorDialog(onDismiss = { showErrorPopUpQuestion = false }, message = "A flash card must have a question", height = 135)
     } else if (showErrorPopUpAnswers) {

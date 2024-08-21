@@ -7,30 +7,30 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
-import com.seng303.assignment1.data.NoteCard
 import com.seng303.assignment1.data.PlayedGame
-import com.seng303.assignment1.viewmodels.NoteCardViewModel
+import com.seng303.assignment1.viewmodels.PlayerDataViewModel
 import kotlinx.coroutines.FlowPreview
 import org.koin.android.ext.koin.androidContext
 import org.koin.androidx.viewmodel.dsl.viewModel
 import org.koin.dsl.module
 
-val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "notes_data")
+//private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "player_data")
 
 @FlowPreview
-val dataAccessModule = module {
-    single<Storage<NoteCard>> {
+val playerScoreAccessModule = module {
+    single<Storage<PlayedGame>> {
         PermanentStorage(
             gson = get(),
-            type = object : TypeToken<List<NoteCard>>(){}.type,
-            preferenceKey = stringPreferencesKey("noteCards"),
+            type = object : TypeToken<List<PlayedGame>>(){}.type,
+            preferenceKey = stringPreferencesKey("playerData"),
             dataStore = androidContext().dataStore
         )
     }
 
+
     single { Gson() }
 
     viewModel {
-        NoteCardViewModel(flashCardStorage = get())
+        PlayerDataViewModel(playedGameStorage = get())
     }
 }

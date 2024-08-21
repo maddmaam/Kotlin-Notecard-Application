@@ -1,7 +1,7 @@
 package com.seng303.assignment1.screens
 
 import android.content.res.Configuration
-import android.graphics.Bitmap.Config
+import android.media.MediaPlayer
 import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
@@ -18,9 +18,11 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.materialIcon
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
@@ -33,17 +35,20 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import com.seng303.assignment1.R
 import com.seng303.assignment1.data.Answer
 import com.seng303.assignment1.data.NoteCard
-import com.seng303.assignment1.viewmodels.CreateCardViewModel
+import com.seng303.assignment1.dialogs.AlertDialog
 import com.seng303.assignment1.viewmodels.EditCardViewModel
 import com.seng303.assignment1.viewmodels.NoteCardViewModel
 
@@ -62,6 +67,14 @@ fun EditCardScreen(
     }
 
     val currentConfig = LocalConfiguration.current
+    val currentContext = LocalContext.current
+
+    val trashSoundMediaPlayer = MediaPlayer.create(currentContext, R.raw.trash)
+
+
+    var showDeletePopUp by rememberSaveable {
+        mutableStateOf(false)
+    }
 
     LaunchedEffect(currentConfig) {
         snapshotFlow { currentConfig.orientation }.collect {screenOrientation = it}
@@ -84,14 +97,16 @@ fun EditCardScreen(
                 navController = navController,
                 editCardViewModel = editCardViewModel,
                 noteCardViewModel = noteCardViewModel,
-                cardID = cardID
+                cardID = cardID,
+                trashSoundPlayer =trashSoundMediaPlayer
             )
         } else -> {
             PortraitEditCardScreen(
                 navController = navController,
                 editCardViewModel = editCardViewModel,
                 noteCardViewModel = noteCardViewModel,
-                cardID = cardID
+                cardID = cardID,
+                trashSoundPlayer = trashSoundMediaPlayer
             )
         }
     }
@@ -130,7 +145,8 @@ fun LandscapeEditScreen(
     navController: NavController,
     editCardViewModel: EditCardViewModel,
     noteCardViewModel: NoteCardViewModel,
-    cardID: String
+    cardID: String,
+    trashSoundPlayer: MediaPlayer
 ) {
 
     Column(
@@ -139,8 +155,8 @@ fun LandscapeEditScreen(
             .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Box(modifier = Modifier.padding(8.dp)) {
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(30.dp), modifier = Modifier.padding(start = 40.dp)) {
+        Box(modifier = Modifier.padding(8.dp), contentAlignment = Alignment.Center) {
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(30.dp), modifier = Modifier.padding(start = 4.dp)) {
                 Column {
                     Text(
                         text = "Edit flash card", // Title
@@ -170,7 +186,7 @@ fun LandscapeEditScreen(
                     )
                 }
                 LazyColumn(
-                    modifier = Modifier.padding(top = 8.dp, bottom = 52.dp),
+                    modifier = Modifier.padding(top = 2.dp, bottom = 52.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     items(editCardViewModel.answersStrings) { flashCard ->
@@ -199,22 +215,71 @@ fun LandscapeEditScreen(
                         .background(MaterialTheme.colorScheme.secondaryContainer),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Button(onClick = {
-                        noteCardViewModel.editCardById(cardID.toIntOrNull(), card = NoteCard(cardID.toInt(), editCardViewModel.question, editCardViewModel.answersStrings))
-                        editCardViewModel.resetPrevCard()
-                        navController.popBackStack()
-                    }) {
-                        Text(text = "Save and return")
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(30.dp)
+                    ) {
+                        Button(onClick = {
+                            editCardViewModel.showDeletePopUp = true
+                        }) {
+                            Icon(
+                                imageVector = Icons.Default.Delete,
+                                contentDescription = "Delete Flash Card",
+                                tint = Color.Red
+                            )
+                        }
+                        Button(onClick = {
+                            noteCardViewModel.editCardById(
+                                cardID.toIntOrNull(),
+                                card = NoteCard(
+                                    cardID.toInt(),
+                                    editCardViewModel.question,
+                                    editCardViewModel.answersStrings
+                                )
+                            )
+                            editCardViewModel.resetPrevCard()
+                            navController.popBackStack()
+                        }) {
+                            Text(text = "Save and return")
+                        }
                     }
                 }
             }
         }
     }
+    if (editCardViewModel.showDeletePopUp) {
+        AlertDialog(
+            onDismiss = {
+                editCardViewModel.showDeletePopUp = false
+            },
+            onConfirm = {
+                editCardViewModel.showDeletePopUp = false
+                editCardViewModel.resetPrevCard()
+                navController.popBackStack()
+                noteCardViewModel.deleteCardById(cardID.toIntOrNull())
+                trashSoundPlayer.isLooping = false
+                trashSoundPlayer.setVolume(0.7F, 0.7F)
+                trashSoundPlayer.start()
+            },
+            alertTitle = "Delete Flash Card?",
+            alertText = "Are you sure you want to delete this flash card?",
+            dismissText = "Cancel",
+            confirmText = "Delete",
+            icon = Icons.Default.Delete,
+            confirmColor = Color.Red
+        )
+    }
 }
 
 
 @Composable
-fun PortraitEditCardScreen(navController: NavController, editCardViewModel: EditCardViewModel, noteCardViewModel: NoteCardViewModel, cardID: String) {
+fun PortraitEditCardScreen(
+    navController: NavController,
+    editCardViewModel: EditCardViewModel,
+    noteCardViewModel: NoteCardViewModel,
+    cardID: String,
+    trashSoundPlayer: MediaPlayer
+) {
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -273,14 +338,48 @@ fun PortraitEditCardScreen(navController: NavController, editCardViewModel: Edit
                     .background(MaterialTheme.colorScheme.secondaryContainer),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Button(onClick = {
-                    noteCardViewModel.editCardById(cardID.toIntOrNull(), card = NoteCard(cardID.toInt(), editCardViewModel.question, editCardViewModel.answersStrings))
-                    editCardViewModel.resetPrevCard()
-                    navController.popBackStack()
-                }) {
-                    Text(text = "Save and return")
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(30.dp)
+                ) {
+                    Button(onClick = {
+                        editCardViewModel.showDeletePopUp = true
+                    }) {
+                        Icon(imageVector = Icons.Default.Delete, contentDescription = "Delete Flash Card", tint = Color.Red)
+                    }
+
+                    Button(onClick = {
+                        noteCardViewModel.editCardById(cardID.toIntOrNull(), card = NoteCard(cardID.toInt(), editCardViewModel.question, editCardViewModel.answersStrings))
+                        editCardViewModel.resetPrevCard()
+                        navController.popBackStack()
+                    }) {
+                        Text(text = "Save and return")
+                    }
+
                 }
             }
         }
+    }
+
+    if (editCardViewModel.showDeletePopUp) {
+        AlertDialog(
+            onDismiss = {
+                editCardViewModel.showDeletePopUp = false
+            },
+            onConfirm = {
+                editCardViewModel.showDeletePopUp = false
+                editCardViewModel.resetPrevCard()
+                navController.popBackStack()
+                noteCardViewModel.deleteCardById(cardID.toIntOrNull())
+                trashSoundPlayer.isLooping = false
+                trashSoundPlayer.setVolume(0.7F, 0.7F)
+                trashSoundPlayer.start()
+            },
+            alertTitle = "Delete Flash Card?",
+            alertText = "Are you sure you want to delete this flash card?",
+            dismissText = "Cancel",
+            confirmText = "Delete",
+            icon = Icons.Default.Delete,
+            confirmColor = Color.Red
+        )
     }
 }

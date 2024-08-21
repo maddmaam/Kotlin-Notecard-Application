@@ -22,7 +22,7 @@ fun AlertDialog(
     dismissText: String,
     confirmText: String,
     icon: ImageVector,
-    confirmColor: Color = MaterialTheme.colorScheme.onPrimary
+    confirmColor: Color = MaterialTheme.colorScheme.onError
 ) {
     AlertDialog(
         icon = {

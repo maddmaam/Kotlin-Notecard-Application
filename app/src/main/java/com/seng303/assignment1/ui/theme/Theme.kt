@@ -27,7 +27,8 @@ private val DarkColorScheme = darkColorScheme(
     secondaryContainer = DarkSecondary,
     onSecondaryContainer = LightText,
     onTertiary = Color.DarkGray,
-    surfaceContainerLow = Color.LightGray
+    surfaceContainerLow = Color.LightGray,
+    onError = DarkText
 )
 
 private val LightColorScheme = lightColorScheme(
@@ -43,7 +44,8 @@ private val LightColorScheme = lightColorScheme(
     secondaryContainer = LightSecondary,
     onSecondaryContainer = LightText,
     onTertiary = Color.Gray,
-    surfaceContainerLow = Color.hsv(203F, 0.12F, 1F)
+    surfaceContainerLow = Color.hsv(203F, 0.12F, 1F),
+    onError = LightText
 
 
     /* Other default colors to override

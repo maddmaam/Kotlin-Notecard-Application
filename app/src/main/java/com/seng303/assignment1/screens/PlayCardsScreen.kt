@@ -1,6 +1,13 @@
 package com.seng303.assignment1.screens
 
+import android.content.Context
 import android.content.res.Configuration
+import android.media.MediaPlayer
+import android.os.Build
+import android.os.VibrationEffect
+import android.os.Vibrator
+import android.os.VibratorManager
+import android.view.SoundEffectConstants
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -37,8 +44,11 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat.getSystemService
 import androidx.navigation.NavController
+import com.seng303.assignment1.R
 import com.seng303.assignment1.data.Answer
 import com.seng303.assignment1.data.NoteCard
 import com.seng303.assignment1.dialogs.AlertDialog
@@ -47,7 +57,12 @@ import com.seng303.assignment1.viewmodels.PlayGameViewModel
 import kotlinx.coroutines.delay
 
 @Composable
-fun PlayCardScreen(navController: NavController, noteCardViewModel: NoteCardViewModel, playGameViewModel: PlayGameViewModel) {
+fun PlayCardScreen(
+    navController: NavController,
+    noteCardViewModel: NoteCardViewModel,
+    playGameViewModel: PlayGameViewModel,
+    vibrator: Vibrator
+) {
     var screenOrientation by remember {
         mutableIntStateOf(Configuration.ORIENTATION_PORTRAIT)
     }
@@ -57,26 +72,45 @@ fun PlayCardScreen(navController: NavController, noteCardViewModel: NoteCardView
     LaunchedEffect(currentConfig) {
         snapshotFlow { currentConfig.orientation }.collect {screenOrientation = it}
     }
+    val currentContext = LocalContext.current
+
+    val correctSoundMediaPlayer = MediaPlayer.create(currentContext, R.raw.correct)
+    val incorrectSoundMediaPlayer = MediaPlayer.create(currentContext, R.raw.wrong)
 
     when (screenOrientation) {
        Configuration.ORIENTATION_LANDSCAPE -> {
            LandscapePlayCardScreen(
                navController = navController,
                noteCardViewModel = noteCardViewModel,
-               playGameViewModel = playGameViewModel)
-       } else -> {
+               playGameViewModel = playGameViewModel,
+               correctMediaPlayer = correctSoundMediaPlayer,
+               wrongMediaPlayer = incorrectSoundMediaPlayer,
+               vibrator = vibrator
+           ) } else -> {
             PortraitPlayCardScreen (
                 navController = navController,
                 noteCardViewModel = noteCardViewModel,
-                playGameViewModel = playGameViewModel
+                playGameViewModel = playGameViewModel,
+                correctMediaPlayer = correctSoundMediaPlayer,
+                wrongMediaPlayer = incorrectSoundMediaPlayer,
+                vibrator = vibrator
             )
        }
     }
 }
 
 @Composable
-fun QuestionCard(noteCardViewModel: NoteCardViewModel, navController: NavController, playGameViewModel: PlayGameViewModel) {
+fun QuestionCard(
+    noteCardViewModel: NoteCardViewModel,
+    navController: NavController,
+    playGameViewModel: PlayGameViewModel,
+    correctMediaPlayer: MediaPlayer,
+    wrongMediaPlayer: MediaPlayer,
+    vibrator: Vibrator
+) {
     val context = LocalContext.current
+
+    val view = LocalView.current
 
     // List of the current questions stored in permanent storage
     noteCardViewModel.getAllCards()
@@ -96,7 +130,7 @@ fun QuestionCard(noteCardViewModel: NoteCardViewModel, navController: NavControl
         }
         if (!playGameViewModel.getCurrentPlayStatus()) {
             playGameViewModel.initializeAnswerList(noteCards.size)
-            playGameViewModel.initializeQuestionList(noteCards.toList())
+            playGameViewModel.initializeQuestionList(noteCards.shuffled())
             playGameViewModel.startPlaying()
         }
         readyToShow = true
@@ -118,7 +152,7 @@ fun QuestionCard(noteCardViewModel: NoteCardViewModel, navController: NavControl
             )
         } else {
             val selectedOption = remember {
-                mutableStateOf(noteCards[playGameViewModel.currentActiveIndex].answers[1])
+                mutableStateOf(playGameViewModel.getCurrentQuestionsAnswers()[1])
             }
 
             Box(
@@ -130,14 +164,14 @@ fun QuestionCard(noteCardViewModel: NoteCardViewModel, navController: NavControl
                     .border(1.5.dp, Color.hsv(222F, 0.54F, 0.59F), RoundedCornerShape(8.dp))
             ) {
                 Text(
-                    text = noteCards[playGameViewModel.currentActiveIndex].question,
+                    text = playGameViewModel.getQuestions()[playGameViewModel.currentActiveIndex],
                     modifier = Modifier.padding(14.dp),
                     color = MaterialTheme.colorScheme.onSecondaryContainer
                 )
             }
             Box(modifier = Modifier.fillMaxSize()) {
                 LazyColumn(modifier = Modifier.padding(top = 8.dp, bottom = 52.dp)) {
-                    items(noteCards[playGameViewModel.currentActiveIndex].answers) { answer ->
+                    items(playGameViewModel.getCurrentQuestionsAnswers()) { answer ->
                         Row(
                             Modifier
                                 .fillMaxWidth()
@@ -147,7 +181,11 @@ fun QuestionCard(noteCardViewModel: NoteCardViewModel, navController: NavControl
                         ) {
                             RadioButton(
                                 selected = (answer == selectedOption.value),
-                                onClick = { selectedOption.value = answer })
+                                onClick = {
+                                    selectedOption.value = answer
+                                    view.playSoundEffect(SoundEffectConstants.CLICK)
+                                    vibrator.vibrate(VibrationEffect.createOneShot(5, VibrationEffect.DEFAULT_AMPLITUDE))
+                                })
                             Text(text = answer.answerContent, Modifier.padding(horizontal = 12.dp),
                                 color = MaterialTheme.colorScheme.onSecondaryContainer)
                         }
@@ -172,17 +210,25 @@ fun QuestionCard(noteCardViewModel: NoteCardViewModel, navController: NavControl
                         )
                         Button(onClick = {
                             correctAnswersCurrentQuestion =
-                                noteCards[playGameViewModel.currentActiveIndex].answers.filter { it.isCorrectAnswer }
+                                playGameViewModel.getCurrentQuestionsAnswers().filter { it.isCorrectAnswer }
                             val answerCorrect =
                                 correctAnswersCurrentQuestion.contains(selectedOption.value)
                             playGameViewModel.setAnswerCorrect(
                                 playGameViewModel.currentActiveIndex,
                                 answerCorrect
                             )
-                            val toastText: String = if (answerCorrect) {
-                                "Correct Answer"
+                            var toastText = ""
+                            if (answerCorrect) {
+                                toastText = "Correct Answer"
+                                correctMediaPlayer.isLooping = false
+                                correctMediaPlayer.start()
+                                correctMediaPlayer.setVolume(0.6F, 0.6F)
+                                vibrator.vibrate(VibrationEffect.createOneShot(50, VibrationEffect.DEFAULT_AMPLITUDE))
                             } else {
-                                "Wrong Answer"
+                                toastText = "Wrong Answer"
+                                wrongMediaPlayer.isLooping = false
+                                wrongMediaPlayer.start()
+                                wrongMediaPlayer.setVolume(0.3F, 0.3F)
                             }
                             Toast.makeText(context, toastText, Toast.LENGTH_SHORT).show()
                             if (questionNum < noteCards.count()) {
@@ -203,7 +249,14 @@ fun QuestionCard(noteCardViewModel: NoteCardViewModel, navController: NavControl
 }
 
 @Composable
-fun PortraitPlayCardScreen(navController: NavController, noteCardViewModel: NoteCardViewModel, playGameViewModel: PlayGameViewModel) {
+fun PortraitPlayCardScreen(
+    navController: NavController,
+    noteCardViewModel: NoteCardViewModel,
+    playGameViewModel: PlayGameViewModel,
+    correctMediaPlayer: MediaPlayer,
+    wrongMediaPlayer: MediaPlayer,
+    vibrator: Vibrator
+) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -213,18 +266,40 @@ fun PortraitPlayCardScreen(navController: NavController, noteCardViewModel: Note
             style = MaterialTheme.typography.headlineLarge,
             modifier = Modifier.padding(8.dp),
             color = MaterialTheme.colorScheme.onSecondaryContainer)
-        QuestionCard(noteCardViewModel, navController, playGameViewModel)
+        QuestionCard(
+            noteCardViewModel,
+            navController,
+            playGameViewModel,
+            correctMediaPlayer,
+            wrongMediaPlayer,
+            vibrator
+        )
     }
 }
 
 @Composable
-fun LandscapePlayCardScreen(navController: NavController, noteCardViewModel: NoteCardViewModel, playGameViewModel: PlayGameViewModel) {
+fun LandscapePlayCardScreen(
+    navController: NavController,
+    noteCardViewModel: NoteCardViewModel,
+    playGameViewModel: PlayGameViewModel,
+    correctMediaPlayer: MediaPlayer,
+    wrongMediaPlayer: MediaPlayer,
+    vibrator: Vibrator
+) {
     Column(
         modifier = Modifier
             .fillMaxSize()
             .padding(16.dp)
     ) {
-        QuestionCard(noteCardViewModel = noteCardViewModel, navController = navController, playGameViewModel = playGameViewModel)
+        QuestionCard(
+            noteCardViewModel = noteCardViewModel,
+            navController = navController,
+            playGameViewModel = playGameViewModel,
+            correctMediaPlayer = correctMediaPlayer,
+            wrongMediaPlayer = wrongMediaPlayer,
+            vibrator = vibrator
+        )
+
     }
 }
 

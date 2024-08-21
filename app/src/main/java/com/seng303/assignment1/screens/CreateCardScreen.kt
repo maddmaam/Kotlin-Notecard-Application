@@ -122,8 +122,8 @@ fun LandScapeCreateCardScreen(navController: NavController, noteCardViewModel: N
             .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Box(modifier = Modifier.padding(8.dp)) {
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(30.dp), modifier = Modifier.padding(start = 40.dp)) {
+        Box(modifier = Modifier.padding(8.dp), contentAlignment = Alignment.Center ) {
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(30.dp), modifier = Modifier.padding(4.dp)) {
                 Column {
                     Text(text = "Add a new flash card", // Title
                         style = MaterialTheme.typography.headlineLarge,

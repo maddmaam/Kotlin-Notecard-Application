@@ -3,6 +3,8 @@ package com.seng303.assignment1.screens
 import android.app.SearchManager
 import android.content.Intent
 import android.content.res.Configuration
+import android.media.MediaPlayer
+import android.provider.MediaStore.Audio.Media
 import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
@@ -45,6 +47,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat.startActivity
 import androidx.navigation.NavController
+import com.seng303.assignment1.R
 import com.seng303.assignment1.data.NoteCard
 import com.seng303.assignment1.dialogs.AlertDialog
 import com.seng303.assignment1.viewmodels.EditCardViewModel
@@ -53,13 +56,21 @@ import kotlinx.coroutines.delay
 
 
 @Composable
-fun ViewFlashCardScreen(navController: NavController, noteCardViewModel: NoteCardViewModel, resetCardEditFn: () -> Unit) {
+fun ViewFlashCardScreen(
+    navController: NavController,
+    noteCardViewModel: NoteCardViewModel,
+    resetCardEditFn: () -> Unit
+) {
     noteCardViewModel.getAllCards()
     val flashCards: List<NoteCard> by noteCardViewModel.noteCards.collectAsState(emptyList())
     var readyToShow by rememberSaveable {
         mutableStateOf(false)
     }
     resetCardEditFn()
+
+    val context = LocalContext.current
+
+    val trashSoundPlayer = MediaPlayer.create(context, R.raw.trash)
     
     LaunchedEffect(key1 = flashCards) {
         var timer: Int = 0
@@ -88,7 +99,8 @@ fun ViewFlashCardScreen(navController: NavController, noteCardViewModel: NoteCar
                 horizontalAlignment = Alignment.CenterHorizontally) {
                 items(flashCards) { flashCard ->
                     CardElement(navController = navController, flashCard = flashCard,
-                        deleteLambda = {id: Int ->  noteCardViewModel.deleteCardById(id)}, numCards = flashCards.size)
+                        deleteLambda = {id: Int ->  noteCardViewModel.deleteCardById(id)},
+                        numCards = flashCards.size, trashSoundPlayer = trashSoundPlayer)
                 }
             }
         } else if (readyToShow) {
@@ -107,7 +119,13 @@ fun ViewFlashCardScreen(navController: NavController, noteCardViewModel: NoteCar
 }
 
 @Composable
-fun CardElement(navController: NavController, flashCard: NoteCard, deleteLambda: (id: Int) -> Unit, numCards: Int) {
+fun CardElement(
+    navController: NavController,
+    flashCard: NoteCard,
+    deleteLambda: (id: Int) -> Unit,
+    numCards: Int,
+    trashSoundPlayer: MediaPlayer
+) {
     val currentContext = LocalContext.current
     val searchIntent = Intent(Intent.ACTION_WEB_SEARCH)
     searchIntent.putExtra(SearchManager.QUERY, flashCard.question)
@@ -155,15 +173,18 @@ fun CardElement(navController: NavController, flashCard: NoteCard, deleteLambda:
     if (showAlertDialog) {
         AlertDialog(
             onDismiss = {
-                navController.popBackStack()
-                navController.navigate("ViewFlashCards")
+                showAlertDialog = false
             },
             onConfirm = {
                 deleteLambda(flashCard.id)
-                navController.popBackStack()
                 if (numCards > 1) {
-                    navController.navigate("ViewFlashCards")
+                    showAlertDialog = false
+                } else {
+                    navController.popBackStack()
                 }
+                trashSoundPlayer.isLooping = false
+                trashSoundPlayer.start()
+                trashSoundPlayer.setVolume(0.7F, 0.7F)
             },
             alertTitle = "Delete Flash Card?",
             alertText = "Are you sure you would like to delete flash card: \"${flashCard.question}\" ?",

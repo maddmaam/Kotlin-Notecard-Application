@@ -7,18 +7,25 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import com.seng303.assignment1.data.Answer
 import com.seng303.assignment1.data.NoteCard
+import com.seng303.assignment1.data.Player
 
 class PlayGameViewModel : ViewModel() {
     private var correctAnswers = mutableListOf(false, false)
     private var questions = mutableListOf("")
     private var isPlaying by mutableStateOf(false)
     var currentActiveIndex by mutableIntStateOf(0)
+    private var shuffledQuestionAnswers = mutableListOf(listOf(Answer(false, "")))
+    var player by mutableStateOf(Player(""))
+        private set
 
     fun initializeQuestionList(cards: List<NoteCard>) {
         questions = emptyList<String>().toMutableList()
+        shuffledQuestionAnswers = emptyList<List<Answer>>().toMutableList()
         cards.forEach {
             questions.add(it.question)
+            shuffledQuestionAnswers.add(it.answers.shuffled())
         }
     }
 
@@ -53,5 +60,13 @@ class PlayGameViewModel : ViewModel() {
 
     fun resetPlaying() {
         isPlaying = false
+    }
+
+    fun getCurrentQuestionsAnswers(): List<Answer> {
+        return shuffledQuestionAnswers[currentActiveIndex]
+    }
+
+    fun setNewPlayer(playerName: String) {
+        player = Player(playerName)
     }
 }

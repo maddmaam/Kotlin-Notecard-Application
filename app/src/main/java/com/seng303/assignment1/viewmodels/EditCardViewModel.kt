@@ -11,6 +11,7 @@ import com.seng303.assignment1.data.NoteCard
 
 class EditCardViewModel : ViewModel() {
     var previousCard by mutableStateOf(NoteCard(0, "", emptyList()))
+    var showDeletePopUp by mutableStateOf(false)
 
     var question by mutableStateOf("")
         private set

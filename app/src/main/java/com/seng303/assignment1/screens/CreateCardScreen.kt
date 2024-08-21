@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
@@ -24,29 +25,25 @@ import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.seng303.assignment1.data.Answer
-import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.CheckboxColors
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.snapshotFlow
-import androidx.compose.ui.platform.LocalConfiguration
 import com.seng303.assignment1.dialogs.ErrorDialog
 import com.seng303.assignment1.viewmodels.CreateCardViewModel
 import com.seng303.assignment1.viewmodels.NoteCardViewModel
 
-// TODO: THIS NEED TO SHOW ERROR WHEN NO CARDS ARE RETRIEVED
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun CreateCardScreen(navController: NavController, noteCardViewModel: NoteCardViewModel, createCardViewModel: CreateCardViewModel)  {
@@ -189,11 +186,11 @@ fun LandScapeCreateCardScreen(navController: NavController, noteCardViewModel: N
                     val filteredAnswers = createCardViewModel.getFilteredAnswers()
                     val numCorrectAnswers = createCardViewModel.getNumCorrectAnswers()
                     if (createCardViewModel.question.isEmpty()) {
-                        showErrorPopUpQuestion = true;
+                        showErrorPopUpQuestion = true
                     } else if (filteredAnswers.count() < 2) {
-                        showErrorPopUpAnswers = true;
+                        showErrorPopUpAnswers = true
                     } else if (numCorrectAnswers < 1) {
-                        showErrorPopUpNoneCorrect = true;
+                        showErrorPopUpNoneCorrect = true
                     } else {
                         noteCardViewModel.createCard(createCardViewModel.question, filteredAnswers)
                         navController.navigate("Home")

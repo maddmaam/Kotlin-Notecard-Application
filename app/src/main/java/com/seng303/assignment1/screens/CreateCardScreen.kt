@@ -122,9 +122,9 @@ fun LandScapeCreateCardScreen(navController: NavController, noteCardViewModel: N
         Box(modifier = Modifier.padding(8.dp), contentAlignment = Alignment.Center ) {
             FlowRow(horizontalArrangement = Arrangement.spacedBy(30.dp), modifier = Modifier.padding(4.dp)) {
                 Column {
-                    Text(text = "Add a new flash card", // Title
+                    Text(text = "Add new flash card", // Title
                         style = MaterialTheme.typography.headlineLarge,
-                        modifier = Modifier.padding(8.dp),
+                        modifier = Modifier.padding(2.dp),
                         color = when (isSystemInDarkTheme()) {
                             true -> {
                                 MaterialTheme.colorScheme.inverseOnSurface
@@ -175,29 +175,30 @@ fun LandScapeCreateCardScreen(navController: NavController, noteCardViewModel: N
                     }
                 }
             }
+            Box(modifier = Modifier.fillMaxSize()) {
+                Column(modifier = Modifier
+                    .fillMaxWidth()
+                    .align(Alignment.BottomCenter)
+                    .background(MaterialTheme.colorScheme.secondaryContainer),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Button(onClick = {
+                        val filteredAnswers = createCardViewModel.getFilteredAnswers()
+                        val numCorrectAnswers = createCardViewModel.getNumCorrectAnswers()
+                        if (createCardViewModel.question.isEmpty()) {
+                            showErrorPopUpQuestion = true
+                        } else if (filteredAnswers.count() < 2) {
+                            showErrorPopUpAnswers = true
+                        } else if (numCorrectAnswers < 1) {
+                            showErrorPopUpNoneCorrect = true
+                        } else {
+                            noteCardViewModel.createCard(createCardViewModel.question, filteredAnswers)
+                            navController.navigate("Home")
+                        }
 
-            Column(modifier = Modifier
-                .fillMaxWidth()
-                .align(Alignment.BottomCenter)
-                .background(MaterialTheme.colorScheme.secondaryContainer),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Button(onClick = {
-                    val filteredAnswers = createCardViewModel.getFilteredAnswers()
-                    val numCorrectAnswers = createCardViewModel.getNumCorrectAnswers()
-                    if (createCardViewModel.question.isEmpty()) {
-                        showErrorPopUpQuestion = true
-                    } else if (filteredAnswers.count() < 2) {
-                        showErrorPopUpAnswers = true
-                    } else if (numCorrectAnswers < 1) {
-                        showErrorPopUpNoneCorrect = true
-                    } else {
-                        noteCardViewModel.createCard(createCardViewModel.question, filteredAnswers)
-                        navController.navigate("Home")
+                    }) {
+                        Text(text = "Save and return")
                     }
-
-                }) {
-                    Text(text = "Save and return")
                 }
             }
         }
@@ -231,7 +232,7 @@ fun PortraitCreateCardScreen(navController: NavController, noteCardViewModel: No
             .fillMaxSize()
             .padding(16.dp)
     ) {
-        Text(text = "Add a new flash card", // Title
+        Text(text = "Add new flash card", // Title
             style = MaterialTheme.typography.headlineLarge,
             modifier = Modifier.padding(8.dp),
             color = when (isSystemInDarkTheme()) {

@@ -8,7 +8,6 @@ import androidx.datastore.preferences.preferencesDataStore
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import com.seng303.assignment1.data.NoteCard
-import com.seng303.assignment1.data.PlayedGame
 import com.seng303.assignment1.viewmodels.NoteCardViewModel
 import kotlinx.coroutines.FlowPreview
 import org.koin.android.ext.koin.androidContext

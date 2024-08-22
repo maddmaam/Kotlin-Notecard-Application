@@ -1,17 +1,13 @@
 package com.seng303.assignment1.screens
 
-import android.content.Context
 import android.content.res.Configuration
 import android.media.MediaPlayer
-import android.os.Build
 import android.os.VibrationEffect
 import android.os.Vibrator
-import android.os.VibratorManager
 import android.view.SoundEffectConstants
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -35,7 +31,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
@@ -46,7 +41,6 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.unit.dp
-import androidx.core.content.ContextCompat.getSystemService
 import androidx.navigation.NavController
 import com.seng303.assignment1.R
 import com.seng303.assignment1.data.Answer
@@ -123,7 +117,7 @@ fun QuestionCard(
     }
 
     LaunchedEffect(noteCards) { // CURSED BUT IT WORKS haha
-        var timer: Int = 0
+        var timer = 0
         while (noteCardViewModel.getAllCards().isActive && timer != 500 && noteCards.isEmpty()) {
             timer += 5
             delay(5)
@@ -151,9 +145,11 @@ fun QuestionCard(
                 icon = Icons.Default.Info
             )
         } else {
-            val selectedOption = remember {
-                mutableStateOf(playGameViewModel.getCurrentQuestionsAnswers()[1])
+            var selectedOption by remember {
+                mutableStateOf(Answer(false, ""))
             }
+
+            selectedOption = playGameViewModel.getCurrentQuestionsAnswers()[1]
 
             Box(
                 modifier = Modifier
@@ -180,9 +176,9 @@ fun QuestionCard(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             RadioButton(
-                                selected = (answer == selectedOption.value),
+                                selected = (answer == selectedOption),
                                 onClick = {
-                                    selectedOption.value = answer
+                                    selectedOption = answer
                                     view.playSoundEffect(SoundEffectConstants.CLICK)
                                     vibrator.vibrate(VibrationEffect.createOneShot(5, VibrationEffect.DEFAULT_AMPLITUDE))
                                 })
@@ -212,12 +208,12 @@ fun QuestionCard(
                             correctAnswersCurrentQuestion =
                                 playGameViewModel.getCurrentQuestionsAnswers().filter { it.isCorrectAnswer }
                             val answerCorrect =
-                                correctAnswersCurrentQuestion.contains(selectedOption.value)
+                                correctAnswersCurrentQuestion.contains(selectedOption)
                             playGameViewModel.setAnswerCorrect(
                                 playGameViewModel.currentActiveIndex,
                                 answerCorrect
                             )
-                            var toastText = ""
+                            val toastText: String
                             if (answerCorrect) {
                                 toastText = "Correct Answer"
                                 correctMediaPlayer.isLooping = false

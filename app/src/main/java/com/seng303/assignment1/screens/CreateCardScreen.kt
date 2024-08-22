@@ -44,7 +44,6 @@ import com.seng303.assignment1.dialogs.ErrorDialog
 import com.seng303.assignment1.viewmodels.CreateCardViewModel
 import com.seng303.assignment1.viewmodels.NoteCardViewModel
 
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun CreateCardScreen(navController: NavController, noteCardViewModel: NoteCardViewModel, createCardViewModel: CreateCardViewModel)  {
     var screenOrientation by remember {

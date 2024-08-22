@@ -8,17 +8,14 @@ import android.os.VibratorManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.material3.ExperimentalMaterial3Api
 import com.seng303.assignment1.screens.HomeScreen
 import com.seng303.assignment1.viewmodels.NoteCardViewModel
-import com.seng303.assignment1.viewmodels.PlayerDataViewModel
 import org.koin.androidx.viewmodel.ext.android.viewModel as koinViewModel
 
 class MainActivity : ComponentActivity() {
     private val noteViewModel: NoteCardViewModel by koinViewModel()
     //private val playerDataViewModel: PlayerDataViewModel by koinViewModel()
 
-    @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 

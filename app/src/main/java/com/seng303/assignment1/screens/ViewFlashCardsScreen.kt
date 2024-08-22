@@ -4,7 +4,6 @@ import android.app.SearchManager
 import android.content.Intent
 import android.content.res.Configuration
 import android.media.MediaPlayer
-import android.provider.MediaStore.Audio.Media
 import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
@@ -50,7 +49,6 @@ import androidx.navigation.NavController
 import com.seng303.assignment1.R
 import com.seng303.assignment1.data.NoteCard
 import com.seng303.assignment1.dialogs.AlertDialog
-import com.seng303.assignment1.viewmodels.EditCardViewModel
 import com.seng303.assignment1.viewmodels.NoteCardViewModel
 import kotlinx.coroutines.delay
 
@@ -73,7 +71,7 @@ fun ViewFlashCardScreen(
     val trashSoundPlayer = MediaPlayer.create(context, R.raw.trash)
     
     LaunchedEffect(key1 = flashCards) {
-        var timer: Int = 0
+        var timer = 0
         while (noteCardViewModel.getAllCards().isActive && timer != 500 && flashCards.isEmpty()) {
             timer += 5
             delay(5)

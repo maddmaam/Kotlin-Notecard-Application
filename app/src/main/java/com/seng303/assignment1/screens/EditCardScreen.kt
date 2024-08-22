@@ -49,6 +49,7 @@ import com.seng303.assignment1.R
 import com.seng303.assignment1.data.Answer
 import com.seng303.assignment1.data.NoteCard
 import com.seng303.assignment1.dialogs.AlertDialog
+import com.seng303.assignment1.dialogs.ErrorDialog
 import com.seng303.assignment1.viewmodels.EditCardViewModel
 import com.seng303.assignment1.viewmodels.NoteCardViewModel
 
@@ -70,11 +71,6 @@ fun EditCardScreen(
     val currentContext = LocalContext.current
 
     val trashSoundMediaPlayer = MediaPlayer.create(currentContext, R.raw.trash)
-
-
-    var showDeletePopUp by rememberSaveable {
-        mutableStateOf(false)
-    }
 
     LaunchedEffect(currentConfig) {
         snapshotFlow { currentConfig.orientation }.collect {screenOrientation = it}
@@ -113,7 +109,7 @@ fun EditCardScreen(
 }
 
 @Composable
-fun EditScreenAnswerBox(answer: Answer, editCardViewModel: EditCardViewModel) {
+fun EditScreenAnswerBox(answer: Answer) {
     // This needs to be updated so it calls the backend logic which will be a class and it can set the
     // answer boolean of the class
 
@@ -148,6 +144,17 @@ fun LandscapeEditScreen(
     cardID: String,
     trashSoundPlayer: MediaPlayer
 ) {
+    var showErrorPopUpQuestion by rememberSaveable{
+        mutableStateOf(false)
+    }
+
+    var showErrorPopUpAnswers by rememberSaveable{
+        mutableStateOf(false)
+    }
+
+    var showErrorPopUpNoneCorrect by rememberSaveable {
+        mutableStateOf(false)
+    }
 
     Column(
         modifier = Modifier
@@ -190,7 +197,7 @@ fun LandscapeEditScreen(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     items(editCardViewModel.answersStrings) { flashCard ->
-                        EditScreenAnswerBox(flashCard, editCardViewModel)
+                        EditScreenAnswerBox(flashCard)
                     }
                     item {
                         Button(
@@ -228,16 +235,24 @@ fun LandscapeEditScreen(
                             )
                         }
                         Button(onClick = {
-                            noteCardViewModel.editCardById(
-                                cardID.toIntOrNull(),
-                                card = NoteCard(
-                                    cardID.toInt(),
-                                    editCardViewModel.question,
-                                    editCardViewModel.answersStrings
+                            if (editCardViewModel.question.isEmpty()) {
+                                showErrorPopUpQuestion = true
+                            } else if (editCardViewModel.answersStrings.count { it.isCorrectAnswer } < 1) {
+                                showErrorPopUpNoneCorrect = true
+                            } else if (editCardViewModel.answersStrings.count() < 2) {
+                                showErrorPopUpAnswers = true
+                            } else {
+                                noteCardViewModel.editCardById(
+                                    cardID.toIntOrNull(),
+                                    card = NoteCard(
+                                        cardID.toInt(),
+                                        editCardViewModel.question,
+                                        editCardViewModel.answersStrings
+                                    )
                                 )
-                            )
-                            editCardViewModel.resetPrevCard()
-                            navController.popBackStack()
+                                editCardViewModel.resetPrevCard()
+                                navController.popBackStack()
+                            }
                         }) {
                             Text(text = "Save and return")
                         }
@@ -268,6 +283,13 @@ fun LandscapeEditScreen(
             confirmColor = Color.Red
         )
     }
+    if (showErrorPopUpQuestion) {
+        ErrorDialog(onDismiss = { showErrorPopUpQuestion = false }, message = "A flash card must have a question", height = 135)
+    } else if (showErrorPopUpAnswers) {
+        ErrorDialog(onDismiss = { showErrorPopUpAnswers = false }, message = "A flash card must have at least 2 answers.", height = 160)
+    } else if (showErrorPopUpNoneCorrect) {
+        ErrorDialog(onDismiss = { showErrorPopUpNoneCorrect=false }, message = "A flash card must have 1 correct answer.", height = 160)
+    }
 }
 
 
@@ -279,6 +301,17 @@ fun PortraitEditCardScreen(
     cardID: String,
     trashSoundPlayer: MediaPlayer
 ) {
+    var showErrorPopUpQuestion by rememberSaveable{
+        mutableStateOf(false)
+    }
+
+    var showErrorPopUpAnswers by rememberSaveable{
+        mutableStateOf(false)
+    }
+
+    var showErrorPopUpNoneCorrect by rememberSaveable {
+        mutableStateOf(false)
+    }
 
     Column(
         modifier = Modifier
@@ -317,7 +350,7 @@ fun PortraitEditCardScreen(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 items(editCardViewModel.answersStrings) { flashCard ->
-                    EditScreenAnswerBox(flashCard, editCardViewModel)
+                    EditScreenAnswerBox(flashCard)
                 }
                 item {
                     Button(
@@ -348,9 +381,24 @@ fun PortraitEditCardScreen(
                     }
 
                     Button(onClick = {
-                        noteCardViewModel.editCardById(cardID.toIntOrNull(), card = NoteCard(cardID.toInt(), editCardViewModel.question, editCardViewModel.answersStrings))
-                        editCardViewModel.resetPrevCard()
-                        navController.popBackStack()
+                        if (editCardViewModel.question.isEmpty()) {
+                            showErrorPopUpQuestion = true
+                        } else if (editCardViewModel.answersStrings.count { it.isCorrectAnswer } < 1) {
+                            showErrorPopUpNoneCorrect = true
+                        } else if (editCardViewModel.answersStrings.count() < 2) {
+                            showErrorPopUpAnswers = true
+                        } else {
+                            noteCardViewModel.editCardById(
+                                cardID.toIntOrNull(),
+                                card = NoteCard(
+                                    cardID.toInt(),
+                                    editCardViewModel.question,
+                                    editCardViewModel.answersStrings
+                                )
+                            )
+                            editCardViewModel.resetPrevCard()
+                            navController.popBackStack()
+                        }
                     }) {
                         Text(text = "Save and return")
                     }
@@ -381,5 +429,12 @@ fun PortraitEditCardScreen(
             icon = Icons.Default.Delete,
             confirmColor = Color.Red
         )
+    }
+    if (showErrorPopUpQuestion) {
+        ErrorDialog(onDismiss = { showErrorPopUpQuestion = false }, message = "A flash card must have a question", height = 135)
+    } else if (showErrorPopUpAnswers) {
+        ErrorDialog(onDismiss = { showErrorPopUpAnswers = false }, message = "A flash card must have at least 2 answers.", height = 160)
+    } else if (showErrorPopUpNoneCorrect) {
+        ErrorDialog(onDismiss = { showErrorPopUpNoneCorrect=false }, message = "A flash card must have 1 correct answer.", height = 160)
     }
 }

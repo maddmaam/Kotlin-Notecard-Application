@@ -4,7 +4,6 @@ import android.media.MediaPlayer
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
@@ -36,7 +35,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.seng303.assignment1.R
 import com.seng303.assignment1.viewmodels.PlayGameViewModel
-import com.seng303.assignment1.viewmodels.PlayerDataViewModel
 import kotlinx.coroutines.delay
 
 @Composable

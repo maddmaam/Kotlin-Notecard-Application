@@ -1,6 +1,5 @@
 package com.seng303.assignment1.screens
 
-import android.media.MediaPlayer
 import android.os.Vibrator
 import android.view.SoundEffectConstants
 import androidx.compose.foundation.background
@@ -22,17 +21,10 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -43,21 +35,16 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.seng303.assignment1.R
-import com.seng303.assignment1.dialogs.PlayerNameDialog
 import com.seng303.assignment1.ui.theme.NotecardAppTheme
 import com.seng303.assignment1.viewmodels.CreateCardViewModel
 import com.seng303.assignment1.viewmodels.EditCardViewModel
 import com.seng303.assignment1.viewmodels.NoteCardViewModel
 import com.seng303.assignment1.viewmodels.PlayGameViewModel
-import com.seng303.assignment1.viewmodels.PlayerDataViewModel
-import kotlin.random.Random
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(noteViewModel: NoteCardViewModel, vibrator: Vibrator) {//, playerDataViewModel: PlayerDataViewModel) {
     NotecardAppTheme {
-        val currentContext = LocalContext.current
         val navigationController = rememberNavController()
         Scaffold(
             Modifier
@@ -132,20 +119,6 @@ fun HomeScreen(noteViewModel: NoteCardViewModel, vibrator: Vibrator) {//, player
 
 @Composable
 fun Home(navController: NavController) {
-//    var firstTimePopUp by rememberSaveable {
-//        mutableStateOf(false)
-//    }
-//
-//    var playerName by rememberSaveable {
-//        mutableStateOf("")
-//    }
-//
-//    if (!firstTimePopUp) {
-//        PlayerNameDialog {
-//            playerName=it
-//            firstTimePopUp = true
-//        }
-//    } The above is unused as I cannot work out how to store two different types of data
     val view = LocalView.current
 
     Column(

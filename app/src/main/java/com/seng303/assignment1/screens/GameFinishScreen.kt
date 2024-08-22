@@ -117,7 +117,7 @@ fun ScoreBox(question: String, correct: Boolean) {
     ) {
         val imagePadding = Modifier
             .align(Alignment.CenterVertically)
-            .padding(top = 2.dp, bottom = 2.dp, end = 8.dp)
+            .padding(top = 2.dp, bottom = 2.dp, end = 2.dp)
             .weight(1f)
         Text(text = question,
             Modifier

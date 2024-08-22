@@ -234,7 +234,7 @@ fun PortraitCreateCardScreen(navController: NavController, noteCardViewModel: No
     ) {
         Text(text = "Add new flash card", // Title
             style = MaterialTheme.typography.headlineLarge,
-            modifier = Modifier.padding(8.dp),
+            modifier = Modifier.padding(2.dp),
             color = when (isSystemInDarkTheme()) {
                 true -> {
                     MaterialTheme.colorScheme.inverseOnSurface
